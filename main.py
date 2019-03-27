@@ -1,7 +1,7 @@
 import pygame
 import itertools
-import Pieces
-import Board
+import pieces
+import board
 
 pygame.init()
 
@@ -13,10 +13,10 @@ screen.fill(background_color)
 
 board_size = 480
 block_size = int(board_size / 8)
-lightSquares = (232, 235, 239)
-darkSquares = (125, 135, 150)
+light_squares = (232, 235, 239)
+dark_squares = (125, 135, 150)
 
-color = itertools.cycle((lightSquares, darkSquares))
+color = itertools.cycle((light_squares, dark_squares))
 for x in range(0, board_size, block_size):
     for y in range(0, board_size, block_size):
         pygame.draw.rect(screen, next(color), pygame.Rect(x, y, block_size, block_size))

@@ -1,5 +1,5 @@
 import pygame
-import Board
+import board
 pygame.init()
 
 # class Pawn():
@@ -9,5 +9,5 @@ pygame.init()
 
 
 
-whiteColor = (242, 242, 242)
-blackColoe = (0, 0, 0)
+white_color = (242, 242, 242)
+black_color = (0, 0, 0)
