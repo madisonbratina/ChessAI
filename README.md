@@ -2,18 +2,10 @@
 
 * Here we have a chess vs AI game for your entertainment. 
 
-* Must have Python 2.7 and Pygame 1.9.2 installed.
+* Must have Python 3.7 and Pygame 1.9.4 installed.
 
 ### Installation Instructions
 
-> Run the following commands
-```commandline
-pip install requirements.txt
-python Chess.py
-```
+> It's not done yet, still working on it.
 
-*Have fun!*
-
-* Stockfish can be used as a AI Chess Engine (Improvements)
-
-* Colors can be changed in source code
+> Come back soon!
