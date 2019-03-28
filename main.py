@@ -52,6 +52,6 @@ while running:
 
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.MOUSEBUTTONDOWN:
+        elif event.type == pygame.MOUSEBUTTONUP:
             print(selected_square(mouse_pos))
 
