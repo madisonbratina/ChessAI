@@ -3,34 +3,29 @@ import itertools
 import pieces
 import board
 
+from pieces import *
+from board import *
+
 pygame.init()
 
 (width, height) = (480, 480)
 screen = pygame.display.set_mode((width, height))
-pygame.display.set_caption(("CHESS AI - LET'S DO THIS!"))
-background_color = (255, 255, 255)
-screen.fill(background_color)
+pygame.display.set_caption("CHESS AI - LET'S DO THIS!")
 
 board_size = 480
 block_size = int(board_size / 8)
 light_squares = (232, 235, 239)
 dark_squares = (125, 135, 150)
+highlight_square = (105, 166, 217)
+board_colors = [light_squares, dark_squares]
 
-color = itertools.cycle((light_squares, dark_squares))
-for x in range(0, board_size, block_size):
-    for y in range(0, board_size, block_size):
-        pygame.draw.rect(screen, next(color), pygame.Rect(x, y, block_size, block_size))
-    next(color)
+MouseDown = False
+MouseReleased = False
+SelectedPiece = None
+SelectedSquare = None
+OriginalPlace = None
+OldPlacePosition = None
 
-
-#Need to create a way of locating each square.
-#Convert between A1 coordinate to [1, 1]
-
-blackBishop = pygame.image.load('Pieces/80/BlackBishop.png')
-blackBishop = pygame.transform.smoothscale(blackBishop, (60, 60))
-screen.blit(blackBishop, (60, 60))
-
-#Converts the cursors location to a set of coordinates on the board
 def selected_square(num):
     for x in range(0, board_size, block_size):
         for y in range(0, board_size, block_size):
@@ -41,17 +36,65 @@ def selected_square(num):
     return coord
 
 
+def piece_in_square(_position, all_pieces):
+    for a_piece in all_pieces:
+        if _position == a_piece.position:
+            return a_piece
+    return None
 
-pygame.display.flip()
+
 running = True
-while running:
+while True:
 
+    # Get cursor position
     mouse_pos = pygame.mouse.get_pos()
 
     for event in pygame.event.get():
 
+        draw_board(screen, board_colors)
+
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.MOUSEBUTTONUP:
-            print(selected_square(mouse_pos))
+        # ------ Mouse Up and Down Events ------
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            MouseDown = True
+        if event.type == pygame.MOUSEBUTTONUP:
+            MouseDown = False
+            MouseReleased = True
 
+        if MouseDown and SelectedPiece:
+            SelectedPiece.drag(mouse_pos)
+            OriginalPlace.move_list(screen)
+
+        if MouseDown and not SelectedPiece:
+            SelectedPiece = piece_in_square(selected_square(mouse_pos), Pieces)
+            if SelectedPiece:
+                OriginalPlace = SelectedPiece
+                OldPlacePosition = SelectedPiece.position
+
+        if MouseReleased and SelectedPiece:
+            MouseReleased = False
+            # ----- Drag and Drop Pieces -----
+            for i in range(len(OriginalPlace.move_list(screen))):
+                if tuple(OriginalPlace.move_list(screen)[i]) == selected_square(mouse_pos):
+                    SelectedPiece.update(selected_square(mouse_pos))
+                else:
+                    SelectedPiece.update(OriginalPlace.position)
+
+            print(SelectedPiece.position, OldPlacePosition)
+            if SelectedPiece.position != OldPlacePosition:
+                SelectedPiece = None
+                OriginalPlace = None
+
+            draw_board(screen, board_colors)
+
+
+
+
+        #if OriginalPlace is not None:
+         #   OriginalPlace.move_list(screen)
+
+        # load pieces onto the board
+        for piece in Pieces:
+            piece.draw(screen)
+        pygame.display.flip()
