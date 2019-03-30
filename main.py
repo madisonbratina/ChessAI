@@ -24,7 +24,7 @@ MouseReleased = False
 SelectedPiece = None
 SelectedSquare = None
 OriginalPlace = None
-
+OldPlacePosition = None
 
 def selected_square(num):
     for x in range(0, board_size, block_size):
@@ -40,6 +40,7 @@ def piece_in_square(_position, all_pieces):
     for a_piece in all_pieces:
         if _position == a_piece.position:
             return a_piece
+    return None
 
 
 running = True
@@ -63,23 +64,35 @@ while True:
 
         if MouseDown and SelectedPiece:
             SelectedPiece.drag(mouse_pos)
+            OriginalPlace.move_list(screen)
+
         if MouseDown and not SelectedPiece:
             SelectedPiece = piece_in_square(selected_square(mouse_pos), Pieces)
             if SelectedPiece:
                 OriginalPlace = SelectedPiece
-            elif not SelectedPiece:
-                OriginalPlace = None
+                OldPlacePosition = SelectedPiece.position
+
         if MouseReleased and SelectedPiece:
             MouseReleased = False
-            print(selected_square(mouse_pos))
-            SelectedPiece.update(selected_square(mouse_pos))
-            SelectedPiece = None
+            # ----- Drag and Drop Pieces -----
+            for i in range(len(OriginalPlace.move_list(screen))):
+                if tuple(OriginalPlace.move_list(screen)[i]) == selected_square(mouse_pos):
+                    SelectedPiece.update(selected_square(mouse_pos))
+                else:
+                    SelectedPiece.update(OriginalPlace.position)
 
-        # print(SelectedPiece)
-        if OriginalPlace is not None:
-            # color_square(selected_square(mouse_pos))
-            #print(OriginalPlace.move_list(screen))
-            OriginalPlace.move_list(screen)
+            print(SelectedPiece.position, OldPlacePosition)
+            if SelectedPiece.position != OldPlacePosition:
+                SelectedPiece = None
+                OriginalPlace = None
+
+            draw_board(screen, board_colors)
+
+
+
+
+        #if OriginalPlace is not None:
+         #   OriginalPlace.move_list(screen)
 
         # load pieces onto the board
         for piece in Pieces:
