@@ -85,6 +85,11 @@ while True:
                     if tuple(OriginalPlace.move_list(screen)[i]) == selected_square(mouse_pos):
                         OriginalPlace.update(selected_square(mouse_pos))
                         draw_board(screen, board_colors)
+                        for piece in Pieces:
+                            if piece.position == OriginalPlace.position and piece.team != OriginalPlace.team:
+                                Pieces.remove(piece)
+                        if type(OriginalPlace) == Pawn:
+                            OriginalPlace.bool += 1
                         teams = teams[::-1]
                         break
                 if SelectedPiece is not OriginalPlace:
@@ -98,6 +103,8 @@ while True:
                     SelectedPiece.update(selected_square(mouse_pos))
                     draw_board(screen, board_colors)
                     OriginalPlace = None
+                    if type(SelectedPiece) == Pawn:
+                        SelectedPiece.bool += 1
                     teams = teams[::-1]
                     break
                 else:

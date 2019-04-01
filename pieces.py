@@ -8,7 +8,6 @@ square_size = 60
 highlight_square = (105, 166, 217)
 
 
-
 class ChessPiece(pygame.sprite.Sprite):
     # Class for chess pieces
 
@@ -45,17 +44,40 @@ class Pawn(ChessPiece):
 
     def move_list(self, screen):
         move_list = []
+        capture_list = []
 
         x_coord = self.position[0] * 60
         y_coord = (-self.position[1] + 7) * 60
         pygame.draw.rect(screen, highlight_square, pygame.Rect(x_coord, y_coord, 60, 60))
 
+        # Possible moves listed here
         if self.team == 'White':
             move_list.append([self.position[0], self.position[1] + 1])
-            move_list.append([self.position[0], self.position[1] + 2])
+            if self.bool <= 0:
+                move_list.append([self.position[0], self.position[1] + 2])
         elif self.team == 'Black':
             move_list.append([self.position[0], self.position[1] - 1])
-            move_list.append([self.position[0], self.position[1] - 2])
+            if self.bool <= 0:
+                move_list.append([self.position[0], self.position[1] - 2])
+
+        for piece in Pieces:
+            if piece.position == tuple(move_list[0]):
+                move_list.remove(list(piece.position))
+
+        # Create capturable piece list
+        for piece in Pieces:
+            if self.team == 'White':
+                if self.position[0] + 1 == piece.position[0] and self.position[1] + 1 == piece.position[1]:
+                    capture_list.append([self.position[0] + 1, self.position[1] + 1])
+                if self.position[0] - 1 == piece.position[0] and self.position[1] + 1 == piece.position[1]:
+                    capture_list.append([self.position[0] - 1, self.position[1] + 1])
+            elif self.team == 'Black':
+                if self.position[0] + 1 == piece.position[0] and self.position[1] - 1 == piece.position[1]:
+                    capture_list.append([self.position[0] + 1, self.position[1] - 1])
+                if self.position[0] - 1 == piece.position[0] and self.position[1] - 1 == piece.position[1]:
+                    capture_list.append([self.position[0] - 1, self.position[1] - 1])
+        move_list.extend(capture_list)
+
         for i in range(len(move_list)):
             x_coord = move_list[i][0]*60 + 30
             y_coord = (-move_list[i][1]+7)*60 + 30
