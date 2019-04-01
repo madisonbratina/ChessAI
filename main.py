@@ -9,7 +9,7 @@ from board import *
 pygame.init()
 
 (width, height) = (480, 480)
-screen = pygame.display.set_mode((width, height))
+screen = pygame.display.set_mode((width, height), pygame.SRCALPHA)
 pygame.display.set_caption("CHESS AI - LET'S DO THIS!")
 
 board_size = 480
@@ -21,10 +21,11 @@ board_colors = [light_squares, dark_squares]
 
 MouseDown = False
 MouseReleased = False
+MouseMoved = False
 SelectedPiece = None
 SelectedSquare = None
 OriginalPlace = None
-OldPlacePosition = None
+teams = ['Black', 'White']
 
 def selected_square(num):
     for x in range(0, board_size, block_size):
@@ -45,10 +46,9 @@ def piece_in_square(_position, all_pieces):
 
 running = True
 while True:
-
+    turn = teams[0]
     # Get cursor position
     mouse_pos = pygame.mouse.get_pos()
-
     for event in pygame.event.get():
 
         draw_board(screen, board_colors)
@@ -61,6 +61,11 @@ while True:
         if event.type == pygame.MOUSEBUTTONUP:
             MouseDown = False
             MouseReleased = True
+        if event.type == pygame.MOUSEMOTION:
+            MouseMoved = True
+
+        if OriginalPlace:
+            OriginalPlace.move_list(screen)
 
         if MouseDown and SelectedPiece:
             SelectedPiece.drag(mouse_pos)
@@ -68,9 +73,22 @@ while True:
 
         if MouseDown and not SelectedPiece:
             SelectedPiece = piece_in_square(selected_square(mouse_pos), Pieces)
+            # ----- Confirm White or Black Turn -----
+            if SelectedPiece and SelectedPiece.team == turn:
+                SelectedPiece = None
             if SelectedPiece:
                 OriginalPlace = SelectedPiece
                 OldPlacePosition = SelectedPiece.position
+            # ----- Click and Place Pieces -----
+            if OriginalPlace:
+                for i in range(len(OriginalPlace.move_list(screen))):
+                    if tuple(OriginalPlace.move_list(screen)[i]) == selected_square(mouse_pos):
+                        OriginalPlace.update(selected_square(mouse_pos))
+                        draw_board(screen, board_colors)
+                        teams = teams[::-1]
+                        break
+                if SelectedPiece is not OriginalPlace:
+                    OriginalPlace = None
 
         if MouseReleased and SelectedPiece:
             MouseReleased = False
@@ -78,23 +96,17 @@ while True:
             for i in range(len(OriginalPlace.move_list(screen))):
                 if tuple(OriginalPlace.move_list(screen)[i]) == selected_square(mouse_pos):
                     SelectedPiece.update(selected_square(mouse_pos))
+                    draw_board(screen, board_colors)
+                    OriginalPlace = None
+                    teams = teams[::-1]
+                    break
                 else:
                     SelectedPiece.update(OriginalPlace.position)
+            SelectedPiece = None
+            if OriginalPlace:
+                OriginalPlace.move_list(screen)
 
-            print(SelectedPiece.position, OldPlacePosition)
-            if SelectedPiece.position != OldPlacePosition:
-                SelectedPiece = None
-                OriginalPlace = None
-
-            draw_board(screen, board_colors)
-
-
-
-
-        #if OriginalPlace is not None:
-         #   OriginalPlace.move_list(screen)
-
-        # load pieces onto the board
+        # ----- Load pieces onto the board -----
         for piece in Pieces:
             piece.draw(screen)
         pygame.display.flip()

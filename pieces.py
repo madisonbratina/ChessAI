@@ -8,12 +8,13 @@ square_size = 60
 highlight_square = (105, 166, 217)
 
 
+
 class ChessPiece(pygame.sprite.Sprite):
     # Class for chess pieces
 
-    def __init__(self, image, position, color):
+    def __init__(self, image, position, team):
         pygame.sprite.Sprite.__init__(self)
-        self.color = color
+        self.team = team
         self.image = pygame.image.load(image)
         self.image = pygame.transform.smoothscale(self.image, (square_size, square_size))
         self.position = position
@@ -38,8 +39,8 @@ class ChessPiece(pygame.sprite.Sprite):
 
 
 class Pawn(ChessPiece):
-    def __init__(self, image, position, color):
-        ChessPiece.__init__(self, image, position, color)
+    def __init__(self, image, position, team):
+        ChessPiece.__init__(self, image, position, team)
         self.bool = 0
 
     def move_list(self, screen):
@@ -49,10 +50,10 @@ class Pawn(ChessPiece):
         y_coord = (-self.position[1] + 7) * 60
         pygame.draw.rect(screen, highlight_square, pygame.Rect(x_coord, y_coord, 60, 60))
 
-        if self.color == 'White':
+        if self.team == 'White':
             move_list.append([self.position[0], self.position[1] + 1])
             move_list.append([self.position[0], self.position[1] + 2])
-        elif self.color == 'Black':
+        elif self.team == 'Black':
             move_list.append([self.position[0], self.position[1] - 1])
             move_list.append([self.position[0], self.position[1] - 2])
         for i in range(len(move_list)):
@@ -64,8 +65,8 @@ class Pawn(ChessPiece):
 
 
 class Knight(ChessPiece):
-    def __init__(self, image, position, color):
-        ChessPiece.__init__(self, image, position, color)
+    def __init__(self, image, position, team):
+        ChessPiece.__init__(self, image, position, team)
         self.bool = 0
 
     def move_list(self):
@@ -73,8 +74,8 @@ class Knight(ChessPiece):
         print("foo")
 
 class Bishop(ChessPiece):
-    def __init__(self, image, position, color):
-        ChessPiece.__init__(self, image, position, color)
+    def __init__(self, image, position, team):
+        ChessPiece.__init__(self, image, position, team)
         self.bool = 0
 
     def move_list(self):
@@ -83,8 +84,8 @@ class Bishop(ChessPiece):
 
 
 class Rook(ChessPiece):
-    def __init__(self, image, position, color):
-        ChessPiece.__init__(self, image, position, color)
+    def __init__(self, image, position, team):
+        ChessPiece.__init__(self, image, position, team)
         self.bool = 0
 
     def move_list(self):
@@ -93,8 +94,8 @@ class Rook(ChessPiece):
 
 
 class Queen(ChessPiece):
-    def __init__(self, image, position, color):
-        ChessPiece.__init__(self, image, position, color)
+    def __init__(self, image, position, team):
+        ChessPiece.__init__(self, image, position, team)
         self.bool = 0
 
     def move_list(self):
@@ -103,8 +104,8 @@ class Queen(ChessPiece):
 
 
 class King(ChessPiece):
-    def __init__(self, image, position, color):
-        ChessPiece.__init__(self, image, position, color)
+    def __init__(self, image, position, team):
+        ChessPiece.__init__(self, image, position, team)
         self.bool = 0
 
     def move_list(self):
@@ -112,7 +113,7 @@ class King(ChessPiece):
         print("foo")
 
 
-# import pieces here - determine there initial position and color
+# import pieces here - determine there initial position and team
 Pieces = [
     Pawn('Pieces/80/WhitePawn.png', (0, 1), 'White'),
     Pawn('Pieces/80/WhitePawn.png', (1, 1), 'White'),
