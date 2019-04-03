@@ -84,11 +84,22 @@ while True:
                 for i in range(len(OriginalPlace.move_list(screen))):
                     if tuple(OriginalPlace.move_list(screen)[i]) == selected_square(mouse_pos):
                         OriginalPlace.update(selected_square(mouse_pos))
+                        # Castling Logic - This can be made better in the future
+                        if type(OriginalPlace) == King and OriginalPlace.bool == 0:
+                            if selected_square(mouse_pos) == (2, 0):
+                                piece_in_square((0, 0), Pieces).update([3, 0])
+                            if selected_square(mouse_pos) == (6, 0):
+                                piece_in_square((7, 0), Pieces).update([5, 0])
+                            if selected_square(mouse_pos) == (1, 7):
+                                piece_in_square((0, 7), Pieces).update([2, 7])
+                            if selected_square(mouse_pos) == (5, 7):
+                                piece_in_square((7, 7), Pieces).update([4, 7])
+
                         draw_board(screen, board_colors)
                         for piece in Pieces:
                             if piece.position == OriginalPlace.position and piece.team != OriginalPlace.team:
                                 Pieces.remove(piece)
-                        if type(OriginalPlace) == Pawn:
+                        if type(OriginalPlace) == Pawn or type(OriginalPlace) == King:
                             OriginalPlace.bool += 1
                         teams = teams[::-1]
                         break
@@ -101,9 +112,22 @@ while True:
             for i in range(len(OriginalPlace.move_list(screen))):
                 if tuple(OriginalPlace.move_list(screen)[i]) == selected_square(mouse_pos):
                     SelectedPiece.update(selected_square(mouse_pos))
+                    # Castling Logic - This can be made better in the future
+                    if type(OriginalPlace) == King and SelectedPiece.bool == 0:
+                        if selected_square(mouse_pos) == (2, 0):
+                            piece_in_square((0, 0), Pieces).update([3, 0])
+                        if selected_square(mouse_pos) == (6, 0):
+                            piece_in_square((7, 0), Pieces).update([5, 0])
+                        if selected_square(mouse_pos) == (1, 7):
+                            piece_in_square((0, 7), Pieces).update([2, 7])
+                        if selected_square(mouse_pos) == (5, 7):
+                            piece_in_square((7, 7), Pieces).update([4, 7])
                     draw_board(screen, board_colors)
                     OriginalPlace = None
-                    if type(SelectedPiece) == Pawn:
+                    for piece in Pieces:
+                        if piece.position == SelectedPiece.position and piece.team != SelectedPiece.team:
+                            Pieces.remove(piece)
+                    if type(SelectedPiece) == Pawn or type(SelectedPiece) == King:
                         SelectedPiece.bool += 1
                     teams = teams[::-1]
                     break
