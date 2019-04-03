@@ -12,6 +12,7 @@ pygame.init()
 screen = pygame.display.set_mode((width, height), pygame.SRCALPHA)
 pygame.display.set_caption("CHESS AI - LET'S DO THIS!")
 
+
 board_size = 480
 block_size = int(board_size / 8)
 light_squares = (232, 235, 239)
@@ -22,6 +23,7 @@ board_colors = [light_squares, dark_squares]
 MouseDown = False
 MouseReleased = False
 MouseMoved = False
+checkmate = False
 SelectedPiece = None
 SelectedSquare = None
 OriginalPlace = None
@@ -47,6 +49,27 @@ def piece_in_square(_position, all_pieces):
 running = True
 while True:
     turn = teams[0]
+    pieces = []
+    under_check = None
+
+    # ----- Check for Check and Checkmate Conditions -----
+    for piece in Pieces:
+        if type(piece) == King:
+            if piece.under_check(screen):
+                under_check = True
+            if under_check:
+                if piece.check_mate(screen):
+                    print("CHECK MATE SON")
+                else:
+                    print("YOUR UNDER CHECK")
+
+    for piece in Pieces:
+        pieces.append([type(piece), piece.team])
+    if not [King, 'Black'] in pieces:
+        print("Black Loses")
+    if not [King, 'White'] in pieces:
+        print("White Loses")
+
     # Get cursor position
     mouse_pos = pygame.mouse.get_pos()
     for event in pygame.event.get():
@@ -90,10 +113,10 @@ while True:
                                 piece_in_square((0, 0), Pieces).update([3, 0])
                             if selected_square(mouse_pos) == (6, 0):
                                 piece_in_square((7, 0), Pieces).update([5, 0])
-                            if selected_square(mouse_pos) == (1, 7):
-                                piece_in_square((0, 7), Pieces).update([2, 7])
-                            if selected_square(mouse_pos) == (5, 7):
-                                piece_in_square((7, 7), Pieces).update([4, 7])
+                            if selected_square(mouse_pos) == (2, 7):
+                                piece_in_square((0, 7), Pieces).update([3, 7])
+                            if selected_square(mouse_pos) == (6, 7):
+                                piece_in_square((7, 7), Pieces).update([5, 7])
 
                         draw_board(screen, board_colors)
                         for piece in Pieces:
@@ -118,10 +141,10 @@ while True:
                             piece_in_square((0, 0), Pieces).update([3, 0])
                         if selected_square(mouse_pos) == (6, 0):
                             piece_in_square((7, 0), Pieces).update([5, 0])
-                        if selected_square(mouse_pos) == (1, 7):
-                            piece_in_square((0, 7), Pieces).update([2, 7])
-                        if selected_square(mouse_pos) == (5, 7):
-                            piece_in_square((7, 7), Pieces).update([4, 7])
+                        if selected_square(mouse_pos) == (2, 7):
+                            piece_in_square((0, 7), Pieces).update([3, 7])
+                        if selected_square(mouse_pos) == (6, 7):
+                            piece_in_square((7, 7), Pieces).update([5, 7])
                     draw_board(screen, board_colors)
                     OriginalPlace = None
                     for piece in Pieces:

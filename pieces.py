@@ -10,8 +10,10 @@ highlight_square = (105, 166, 217)
 
 def determine(move, team):
     for piece in Pieces:
-        if piece.position == tuple(move) and team == piece.team:
+        if piece.position == (move[0], move[1]) and team == piece.team:
             return True
+    if not 0 <= move[0] <= 7 or not 0 <= move[1] <= 7:
+        return True
 
 
 def castling(team):
@@ -24,19 +26,15 @@ def castling(team):
         if type(piece) == Rook and piece.position == (0, 0) and team == 'White':
             if not any(elem in pieces for elem in [(1, 0), (2, 0), (3, 0)]):
                 castle_locations.append([2, 0])
-
         if type(piece) == Rook and piece.position == (7, 0) and team == 'White':
             if not any(elem in pieces for elem in [(5, 0), (6, 0)]):
                 castle_locations.append([6, 0])
-
         if type(piece) == Rook and piece.position == (0, 7) and team == 'Black':
-            if not any(elem in pieces for elem in [(1, 7), (2, 7)]):
-                castle_locations.append([1, 7])
-
+            if not any(elem in pieces for elem in [(1, 7), (2, 7), (3, 7)]):
+                castle_locations.append([2, 7])
         if type(piece) == Rook and piece.position == (7, 7) and team == 'Black':
-            if not any(elem in pieces for elem in [(4, 7), (5, 7), (6, 7)]):
-                castle_locations.append([5, 7])
-
+            if not any(elem in pieces for elem in [(5, 7), (6, 7)]):
+                castle_locations.append([6, 7])
     return castle_locations
 
 
@@ -46,6 +44,49 @@ def is_farther(start, pos1, pos2):
     distance_pos2 = math.sqrt((pos2[0]-start[0])**2+(pos2[1] - start[1])**2)
     if distance_pos1 > distance_pos2:
         return True
+
+
+def draw_moves(screen, home_position, move_list):
+    x_coord = home_position[0] * 60
+    y_coord = (-home_position[1] + 7) * 60
+    pygame.draw.rect(screen, highlight_square, pygame.Rect(x_coord, y_coord, 60, 60))
+
+    for i in range(len(move_list)):
+        x_coord = move_list[i][0] * 60 + 30
+        y_coord = (-move_list[i][1] + 7) * 60 + 30
+        pygame.draw.circle(screen, highlight_square, (x_coord, y_coord), 10)
+
+
+def create_move_list(home, move_list, team):
+    new_list = []
+    final_list = []
+    for i in range(len(move_list)):
+        if len(move_list[i]) == 2:  # for Knights use - has no angle linked to its movements
+            final_list.append([home[0] + move_list[i][0], home[1] + move_list[i][1]])
+        elif len(move_list[i]) == 3:  # used for any pieces that use angles
+            for x in range(1, 8):
+                new_list.append([home[0] + move_list[i][0]*x, home[1] + move_list[i][1]*x, move_list[i][2]])
+
+    if len(move_list[0]) == 3:
+        found_pieces = []
+        for piece in Pieces:
+            for item in new_list:
+                if piece.position == tuple(item[0:2]):
+                    found_pieces.append(item)
+        for item in new_list:
+            final_list.append(item)
+        for x in new_list:
+            for a in found_pieces:
+                if is_farther(list(home), x, a) and x[2] == a[2] and x in final_list:
+                    final_list.remove(x)
+
+        # Change list back to coordinates without angle
+        for move in final_list:
+            del move[2]
+
+    # Using list comprehension to rebuild the move_list with capturable pieces and team mate pieces
+    final_list[:] = [move for move in final_list if not determine(move, team)]
+    return final_list
 
 
 class ChessPiece(pygame.sprite.Sprite):
@@ -88,9 +129,6 @@ class Pawn(ChessPiece):
         capture_list = []
         x = self.position[0]
         y = self.position[1]
-        x_coord = x * 60
-        y_coord = (-y + 7) * 60
-        pygame.draw.rect(screen, highlight_square, pygame.Rect(x_coord, y_coord, 60, 60))
 
         # Possible moves listed here
         if self.team == 'White':
@@ -110,22 +148,19 @@ class Pawn(ChessPiece):
 
         # Create capturable piece list and incorporate en-passant
         for piece in Pieces:
-            if self.team == 'White':
+            if self.team == 'White' and piece.team == 'Black':
                 if x + 1 == piece.position[0] and y + 1 == piece.position[1]:
                     capture_list.append([x + 1, y + 1])
                 if x - 1 == piece.position[0] and y + 1 == piece.position[1]:
                     capture_list.append([x - 1, y + 1])
-            elif self.team == 'Black':
+            elif self.team == 'Black' and piece.team == 'White':
                 if x + 1 == piece.position[0] and y - 1 == piece.position[1]:
                     capture_list.append([x + 1, y - 1])
                 if x - 1 == piece.position[0] and y - 1 == piece.position[1]:
                     capture_list.append([x - 1, y - 1])
         move_list.extend(capture_list)
 
-        for i in range(len(move_list)):
-            x_coord = move_list[i][0]*60 + 30
-            y_coord = (-move_list[i][1]+7)*60 + 30
-            pygame.draw.circle(screen, highlight_square, (x_coord, y_coord), 10)
+        draw_moves(screen, self.position, move_list)
 
         return move_list
 
@@ -136,28 +171,9 @@ class Knight(ChessPiece):
         self.bool = 0
 
     def move_list(self, screen):
-        move_list = []
-        x_coord = self.position[0] * 60
-        y_coord = (-self.position[1] + 7) * 60
-        pygame.draw.rect(screen, highlight_square, pygame.Rect(x_coord, y_coord, 60, 60))
-
-        move_list.append([self.position[0] + 1, self.position[1] + 2])
-        move_list.append([self.position[0] - 1, self.position[1] + 2])
-        move_list.append([self.position[0] + 1, self.position[1] - 2])
-        move_list.append([self.position[0] - 1, self.position[1] - 2])
-        move_list.append([self.position[0] + 2, self.position[1] + 1])
-        move_list.append([self.position[0] - 2, self.position[1] + 1])
-        move_list.append([self.position[0] + 2, self.position[1] - 1])
-        move_list.append([self.position[0] - 2, self.position[1] - 1])
-
-        # Using list comprehension to rebuild the move_list with capturable pieces and team mate pieces
-        move_list[:] = [move for move in move_list if not determine(move, self.team)]
-
-        for i in range(len(move_list)):
-            x_coord = move_list[i][0]*60 + 30
-            y_coord = (-move_list[i][1]+7)*60 + 30
-            pygame.draw.circle(screen, highlight_square, (x_coord, y_coord), 10)
-
+        move_list = [(1, 2), (-1, 2), (1, -2), (-1, -2), (2, 1), (-2, 1), (2, -1), (-2, -1)]
+        move_list = create_move_list(self.position, move_list, self.team)
+        draw_moves(screen, self.position, move_list)
         return move_list
 
 
@@ -167,45 +183,9 @@ class Bishop(ChessPiece):
         self.bool = 0
 
     def move_list(self, screen):
-        move_list = []
-        all_moves = []
-        found_pieces = []
-        x = self.position[0]
-        y = self.position[1]
-        x_coord = x * 60
-        y_coord = (-y + 7) * 60
-        pygame.draw.rect(screen, highlight_square, pygame.Rect(x_coord, y_coord, 60, 60))
-
-        for i in range(1, 8):
-            all_moves.append([x + i, y + i, 45])
-            all_moves.append([x - i, y + i, 135])
-            all_moves.append([x + i, y - i, 225])
-            all_moves.append([x - i, y - i, 315])
-
-        for piece in Pieces:
-            for item in all_moves:
-                if piece.position == tuple(item[0:2]):
-                    found_pieces.append(item)
-
-        for item in all_moves:
-            move_list.append(item)
-
-        for x in all_moves:
-            for a in found_pieces:
-                if is_farther(list(self.position), x, a) and x[2] == a[2] and x in move_list:
-                    move_list.remove(x)
-
-        # Change list back to coordinates without angle
-        for move in move_list:
-            del move[2]
-
-        # Using list comprehension to rebuild the move_list with capturable pieces and team mate pieces
-        move_list[:] = [move for move in move_list if not determine(move, self.team)]
-
-        for i in range(len(move_list)):
-            x_coord = move_list[i][0]*60 + 30
-            y_coord = (-move_list[i][1]+7)*60 + 30
-            pygame.draw.circle(screen, highlight_square, (x_coord, y_coord), 10)
+        all_moves = [(1, 1, 45), (-1, 1, 135), (1, -1, 225), (-1, -1, 315)]
+        move_list = create_move_list(self.position, all_moves, self.team)
+        draw_moves(screen, self.position, move_list)
         return move_list
 
 
@@ -215,45 +195,9 @@ class Rook(ChessPiece):
         self.bool = 0
 
     def move_list(self, screen):
-        move_list = []
-        all_moves = []
-        found_pieces = []
-        x = self.position[0]
-        y = self.position[1]
-        x_coord = x * 60
-        y_coord = (-y + 7) * 60
-        pygame.draw.rect(screen, highlight_square, pygame.Rect(x_coord, y_coord, 60, 60))
-
-        for i in range(1, 8):
-            all_moves.append([x + i, y, 0])
-            all_moves.append([x, y + i, 90])
-            all_moves.append([x - i, y, 180])
-            all_moves.append([x, y - i, 270])
-
-        for piece in Pieces:
-            for item in all_moves:
-                if piece.position == tuple(item[0:2]):
-                    found_pieces.append(item)
-
-        for item in all_moves:
-            move_list.append(item)
-
-        for x in all_moves:
-            for a in found_pieces:
-                if is_farther(list(self.position), x, a) and x[2] == a[2] and x in move_list:
-                    move_list.remove(x)
-
-        # Change list back to coordinates without angle
-        for move in move_list:
-            del move[2]
-
-        # Using list comprehension to rebuild the move_list with capturable pieces and team mate pieces
-        move_list[:] = [move for move in move_list if not determine(move, self.team)]
-
-        for i in range(len(move_list)):
-            x_coord = move_list[i][0]*60 + 30
-            y_coord = (-move_list[i][1]+7)*60 + 30
-            pygame.draw.circle(screen, highlight_square, (x_coord, y_coord), 10)
+        all_moves = [(1, 0, 0), (0, 1, 90), (-1, 0, 180), (0, -1, 270)]
+        move_list = create_move_list(self.position, all_moves, self.team)
+        draw_moves(screen, self.position, move_list)
         return move_list
 
 
@@ -263,49 +207,11 @@ class Queen(ChessPiece):
         self.bool = 0
 
     def move_list(self, screen):
-        move_list = []
-        all_moves = []
-        found_pieces = []
-        x = self.position[0]
-        y = self.position[1]
-        x_coord = x * 60
-        y_coord = (-y + 7) * 60
-        pygame.draw.rect(screen, highlight_square, pygame.Rect(x_coord, y_coord, 60, 60))
 
-        for i in range(1, 8):
-            all_moves.append([x + i, y, 0])
-            all_moves.append([x, y + i, 90])
-            all_moves.append([x - i, y, 180])
-            all_moves.append([x, y - i, 270])
-            all_moves.append([x + i, y + i, 45])
-            all_moves.append([x - i, y + i, 135])
-            all_moves.append([x + i, y - i, 225])
-            all_moves.append([x - i, y - i, 315])
-
-        for piece in Pieces:
-            for item in all_moves:
-                if piece.position == tuple(item[0:2]):
-                    found_pieces.append(item)
-
-        for item in all_moves:
-            move_list.append(item)
-
-        for x in all_moves:
-            for a in found_pieces:
-                if is_farther(list(self.position), x, a) and x[2] == a[2] and x in move_list:
-                    move_list.remove(x)
-
-        # Change list back to coordinates without angle
-        for move in move_list:
-            del move[2]
-
-        # Using list comprehension to rebuild the move_list with capturable pieces and team mate pieces
-        move_list[:] = [move for move in move_list if not determine(move, self.team)]
-
-        for i in range(len(move_list)):
-            x_coord = move_list[i][0] * 60 + 30
-            y_coord = (-move_list[i][1] + 7) * 60 + 30
-            pygame.draw.circle(screen, highlight_square, (x_coord, y_coord), 10)
+        all_moves = [(1, 0, 0), (0, 1, 90), (-1, 0, 180), (0, -1, 270)]  # horizontal and vertical moves
+        all_moves.extend([(1, 1, 45), (-1, 1, 135), (1, -1, 225), (-1, -1, 315)])  # diagonal moves
+        move_list = create_move_list(self.position, all_moves, self.team)
+        draw_moves(screen, self.position, move_list)
         return move_list
 
 
@@ -315,38 +221,38 @@ class King(ChessPiece):
         self.bool = 0
 
     def move_list(self, screen):
-        move_list = []
-        x = self.position[0]
-        y = self.position[1]
-        x_coord = x * 60
-        y_coord = (-y + 7) * 60
-        pygame.draw.rect(screen, highlight_square, pygame.Rect(x_coord, y_coord, 60, 60))
+        move_list = [(1, 0), (0, 1), (-1, 0), (0, -1)]  # horizontal and vertical moves
+        move_list.extend([(1, 1), (-1, 1), (1, -1), (-1, -1)])  # diagonal moves
+        move_list = create_move_list(self.position, move_list, self.team)
 
-        move_list.append([x + 1, y, 0])
-        move_list.append([x, y + 1, 90])
-        move_list.append([x - 1, y, 180])
-        move_list.append([x, y - 1, 270])
-        move_list.append([x + 1, y + 1, 45])
-        move_list.append([x - 1, y + 1, 135])
-        move_list.append([x + 1, y - 1, 225])
-        move_list.append([x - 1, y - 1, 315])
+        # # Logic for Castling
+        # if self.bool <= 0:
+        #     move_list.extend(castling(self.team))
 
-        # Change list back to coordinates without angle - redundant for King
-        for move in move_list:
-            del move[2]
-
-        # Using list comprehension to rebuild the move_list with capturable pieces and team mate pieces
-        move_list[:] = [move for move in move_list if not determine(move, self.team)]
-
-        # Logic for Castling
-        if self.bool <= 0:
-            move_list.extend(castling(self.team))
-
-        for i in range(len(move_list)):
-            x_coord = move_list[i][0] * 60 + 30
-            y_coord = (-move_list[i][1] + 7) * 60 + 30
-            pygame.draw.circle(screen, highlight_square, (x_coord, y_coord), 10)
+        draw_moves(screen, self.position, move_list)
         return move_list
+
+    def under_check(self, screen):
+        moves = []
+        for piece in Pieces:
+            moves.extend(piece.move_list(screen))
+            if list(self.position) in moves and piece.team != self.team:
+                return True
+        return False
+
+    def check_mate(self, screen):
+        checkmate = False
+        moves = []
+        if self.under_check(screen):
+            for piece in Pieces:
+                if piece.team != self.team:
+                    moves.extend(piece.move_list(screen))
+            if self.move_list(screen) == [] or all(elem in moves for elem in self.move_list(screen)):
+                checkmate = True
+            else:
+                checkmate = False
+            print(self.move_list(screen), moves)
+        return checkmate
 
 
 # import pieces here - determine there initial position and team
@@ -382,8 +288,8 @@ Pieces = [
     Rook('Pieces/80/BlackRook.png', (0, 7), 'Black'),
     Rook('Pieces/80/BlackRook.png', (7, 7), 'Black'),
     Queen('Pieces/80/WhiteQueen.png', (3, 0), 'White'),
-    Queen('Pieces/80/BlackQueen.png', (4, 7), 'Black'),
+    Queen('Pieces/80/BlackQueen.png', (3, 7), 'Black'),
     King('Pieces/80/WhiteKing.png', (4, 0), 'White'),
-    King('Pieces/80/BlackKing.png', (3, 7), 'Black'),
+    King('Pieces/80/BlackKing.png', (4, 7), 'Black'),
 ]
 
